@@ -1,1 +1,1 @@
-# photo_hash
+# Photo hash
