@@ -6,8 +6,10 @@ import time
 import worker
 import concurrent.futures
 from send2trash import send2trash
+
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 Image.MAX_IMAGE_PIXELS = 265949760
+
 
 class photo_hash:
     def __init__(self, key, progress, start_time, Len):
@@ -16,13 +18,20 @@ class photo_hash:
         self.progress = progress
         self.time = start_time
         self.Len = Len
-        self.func_dic = {0: imagehash.phash, 1: imagehash.dhash,
-                         2: imagehash.average_hash, 3: imagehash.whash,
-                         4: imagehash.colorhash, 5: imagehash.crop_resistant_hash}
+        self.func_dic = {
+            0: imagehash.phash,
+            1: imagehash.dhash,
+            2: imagehash.average_hash,
+            3: imagehash.whash,
+            4: imagehash.colorhash,
+            5: imagehash.crop_resistant_hash,
+        }
 
     def hash(self, path):
         self.num += 1
-        self.progress.emit(100*self.num//self.Len, round(time.time() - self.time, 3))
+        self.progress.emit(
+            100 * self.num // self.Len, round(time.time() - self.time, 3)
+        )
         if worker.a is True:
             return None, None
         try:
@@ -36,18 +45,24 @@ class photo_hash:
 
 def dir_open(Path, signals=0):
     os.chdir(Path)
-    return sum(os.path.isfile(f) for f in listdir(Path) if '.png' in f.lower() or '.jpg' in f.lower())
+    return sum(
+        os.path.isfile(f)
+        for f in listdir(Path)
+        if ".png" in f.lower() or ".jpg" in f.lower()
+    )
 
 
 def uncopy(Path, signals):
-    newdir = os.path.join(Path, 'copies')
+    newdir = os.path.join(Path, "copies")
     if os.path.isdir(newdir):
         for file in listdir(newdir):
-            if 'copy ' in file:
-                Str = file.replace('copy ', '')
-                Str = Str[Str.find(' ') + 1:]
+            if "copy " in file:
+                Str = file.replace("copy ", "")
+                Str = Str[Str.find(" ") + 1 :]  # noqa E203
                 try:
-                    os.rename(os.path.join(newdir, file), os.path.join(Path, Str))
+                    os.rename(
+                        os.path.join(newdir, file), os.path.join(Path, Str)
+                    )
                 except OSError:
                     continue
         if len(listdir(newdir)) == 0:
@@ -58,7 +73,7 @@ def uncopy(Path, signals):
 def delete(arg, signals):
     Path = arg[0]
     Dic = arg[1]
-    newdir = os.path.join(Path, 'copies')
+    newdir = os.path.join(Path, "copies")
     os.chdir(newdir)
     if os.path.isdir(newdir):
         if not Dic:
@@ -78,7 +93,9 @@ def hash_find(Path, progress, start_time, key, threads):
 
     files = listdir(Path)
     photo = photo_hash(key, progress, start_time, dir_open(Path))
-    with concurrent.futures.ThreadPoolExecutor(max_workers=thread_dic[threads]) as executor:
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=thread_dic[threads]
+    ) as executor:
         results = executor.map(photo.hash, files)
 
     for result in results:
@@ -104,11 +121,11 @@ def hash(arg, signals):
     Dic.clear()
 
     if key_list:
-        newdir = os.path.join(Path, 'copies')
+        newdir = os.path.join(Path, "copies")
         if not os.path.isdir(newdir):
             mkdir(newdir)
 
-    progress.emit(100, 'Finishing up...')
+    progress.emit(100, "Finishing up...")
     j = 0
     for key in key_list:
         res = 0
@@ -123,11 +140,17 @@ def hash(arg, signals):
         List[key][-1], List[key][max_num] = List[key][max_num], List[key][-1]
 
         for i, file in enumerate(List[key]):
-            Str = f'copy {j} {file}'
+            Str = f"copy {j} {file}"
             ppath = os.path.join(newdir, Str)
             if not os.path.isdir(ppath):
                 os.rename(os.path.join(Path, file), ppath)
                 List[key][i] = Str
                 j += 1
-    res = [int(100 * (time.time() - start_time)) / 100, j, dir_open(Path), Path, List]
+    res = [
+        int(100 * (time.time() - start_time)) / 100,
+        j,
+        dir_open(Path),
+        Path,
+        List,
+    ]
     return res
