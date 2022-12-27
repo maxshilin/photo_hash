@@ -108,7 +108,7 @@ class window(QWidget, Ui_PhotoHash):
         self.copies = {}
 
         self.work = worker.Worker(
-            hashing.hash,
+            hashing.find_simular_images,
             [
                 self.path,
                 self.comboBox.currentIndex(),
