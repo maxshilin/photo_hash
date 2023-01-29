@@ -1,7 +1,6 @@
 import os
 import threading
 import time
-from collections import defaultdict
 from queue import Queue
 import imagehash
 import worker
@@ -16,7 +15,7 @@ class MultyWorker:
         self.path = path
         self.workers = workers
         self.method = method
-        self.hash_dict = defaultdict(list)
+        self.hash_dict = {}
         self.lock = threading.Lock()
 
     def get_hash(self, que, func):
@@ -31,19 +30,23 @@ class MultyWorker:
 
                     if hash is None:
                         continue
-                    with self.lock:
-                        self.hash_dict[hash].append(path)
+
+                    if hash in self.hash_dict:
+                        with self.lock:
+                            self.hash_dict[hash].append(path)
+                    else:
+                        with self.lock:
+                            self.hash_dict[hash] = [path]
             except Exception:
                 continue
 
     def work(self, progress, start_time):
-        num = 0
         res = {}
-        Len = sum(
-            os.path.isfile(f)
-            for f in map(lambda x: x.name, os.scandir(self.path))
-            if ".png" in f.lower() or ".jpg" in f.lower()
-        )
+        images = []
+        for root, _, files in os.walk(self.path):
+            for file in files:
+                images.append(os.path.join(root, file))
+
         func_dic = {
             0: imagehash.phash,
             1: imagehash.dhash,
@@ -53,7 +56,7 @@ class MultyWorker:
             5: imagehash.crop_resistant_hash,
         }
 
-        que = Queue(2 * self.workers)
+        que = Queue(self.workers)
 
         threads = [
             threading.Thread(
@@ -69,17 +72,15 @@ class MultyWorker:
         for thread in threads:
             thread.start()
 
-        with os.scandir(self.path) as it:
-            for entry in it:
-                if worker.a is True:
-                    break
-                if entry.is_file():
-                    que.put(entry.name)
-                    num += 1
-                    progress.emit(
-                        100 * (num - self.workers * 2) // Len,
-                        round(time.time() - start_time, 3),
-                    )
+        for i, entry in enumerate(images):
+            if worker.a is True:
+                break
+
+            que.put(entry)
+            progress.emit(
+                100 * (i - self.workers) // len(images),
+                round(time.time() - start_time, 3),
+            )
 
         for _ in range(len(threads)):
             que.put(None)

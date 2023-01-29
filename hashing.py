@@ -1,5 +1,6 @@
 import os
 import time
+import imghdr
 from PIL import Image, ImageFile
 from send2trash import send2trash
 from multi_worker import MultyWorker
@@ -10,47 +11,64 @@ Image.MAX_IMAGE_PIXELS = 265949760
 
 def dir_open(path, signals=None):
     os.chdir(path)
-    return sum(
-        os.path.isfile(f)
-        for f in map(lambda x: x.name, os.scandir(path))
-        if ".png" in f.lower() or ".jpg" in f.lower()
-    )
+    cnt = 0
+    for _, _, files in os.walk(path):
+        for file in files:
+            file = file.lower()
+            if file.lower().endswith((".png", ".jpg", ".jpeg")):
+                cnt += 1
+    return cnt
 
 
 def uncopy(path, signals):
-    newdir = os.path.join(path, "copies")
-    if os.path.isdir(newdir):
-        with os.scandir(newdir) as it:
-            for file in it:
-                file = file.name
-                if "copy " in file:
-                    new_file = file.replace("copy ", "")
-                    new_file = new_file[new_file.find(" ") + 1 :]  # noqa E203
-                    try:
-                        os.rename(
-                            os.path.join(newdir, file),
-                            os.path.join(path, new_file),
-                        )
-                    except OSError:
-                        continue
-            if len(os.listdir(newdir)) == 0:
-                os.rmdir(newdir)
-    return dir_open(path)
+    def exit_function():
+        try:
+            if len(os.listdir(new_dir)) == 0:
+                os.rmdir(new_dir)
+            os.remove(os.path.join(path, "tmp.txt"))
+        except OSError:
+            pass
+        return dir_open(path)
+
+    new_dir = os.path.join(path, "copies")
+    if not os.path.isdir(new_dir):
+        return exit_function()
+
+    initial_names = None
+    if os.path.isfile(os.path.join(path, "tmp.txt")):
+        with open(
+            os.path.join(path, "tmp.txt"), "r", encoding="utf-8"
+        ) as file:
+            initial_names = [name.strip() for name in file.readlines()]
+    else:
+        return exit_function()
+
+    for name in os.listdir(new_dir):
+        try:
+            os.rename(
+                os.path.join(new_dir, name),
+                initial_names[int(name.split(".")[0][5:])],
+            )
+        except OSError:
+            continue
+
+    return exit_function()
 
 
 def delete(arg, signals):
     path = arg[0]
     hash_dict = arg[1]
-    newdir = os.path.join(path, "copies")
-    os.chdir(newdir)
-    if os.path.isdir(newdir):
+    new_dir = os.path.join(path, "copies")
+
+    old_pwd = os.getcwd()
+    os.chdir(new_dir)
+    if os.path.isdir(new_dir):
         if not hash_dict:
-            os.chdir(path)
             return uncopy(path, signals)
         for value in hash_dict.values():
             for i in range(len(value) - 1):
                 send2trash(value[i])
-    os.chdir(path)
+    os.chdir(old_pwd)
     return uncopy(path, signals)
 
 
@@ -65,18 +83,18 @@ def get_hash_dict(path, progress, start_time, method, threads):
 
 def find_simular_images(arg, signals):
     path = arg[0]
-    os.chdir(path)
     progress = signals.progress
     start_time = time.time()
     hash_dict = get_hash_dict(path, progress, start_time, arg[1], arg[2])
 
     if hash_dict:
-        newdir = os.path.join(path, "copies")
-        if not os.path.isdir(newdir):
-            os.mkdir(newdir)
+        new_dir = os.path.join(path, "copies")
+        if not os.path.isdir(new_dir):
+            os.mkdir(new_dir)
 
     progress.emit(100, "Finishing up...")
     j = 0
+    copies_list = []
     for paths in hash_dict.values():
         res = 0
         max_num = 0
@@ -91,12 +109,17 @@ def find_simular_images(arg, signals):
         paths[-1], paths[max_num] = paths[max_num], paths[-1]
 
         for i, file in enumerate(paths):
-            new_name = f"copy {j} {file}"
-            new_path = os.path.join(newdir, new_name)
+            new_name = f"copy {j}.{imghdr.what(file)}"
+            new_path = os.path.join(new_dir, new_name)
             if not os.path.isdir(new_path):
-                os.rename(os.path.join(path, file), new_path)
+                os.rename(file, new_path)
                 j += 1
                 paths[i] = new_name
+                copies_list.append(file + "\n")
+
+    with open(os.path.join(path, "tmp.txt"), "w", encoding="utf-8") as file:
+        file.writelines(copies_list)
+
     res = (
         int(100 * (time.time() - start_time)) / 100,
         j,
