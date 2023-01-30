@@ -1,6 +1,7 @@
 import os
 import threading
 import time
+from collections import defaultdict
 from queue import Queue
 import imagehash
 import worker
@@ -11,12 +12,11 @@ Image.MAX_IMAGE_PIXELS = 265949760
 
 
 class MultyWorker:
-    def __init__(self, method, workers, path):
-        self.path = path
+    def __init__(self, method, workers, source_dir):
+        self.dir = source_dir
         self.workers = workers
         self.method = method
-        self.hash_dict = {}
-        self.lock = threading.Lock()
+        self.hash_dict = defaultdict(list)
 
     def get_hash(self, que, func):
         while True:
@@ -25,25 +25,18 @@ class MultyWorker:
                 break
             try:
                 with Image.open(path) as image:
-                    hash = func(image)
-                    image.close()
-
-                    if hash is None:
+                    image_hash = func(image)
+                    if image_hash is None:
                         continue
 
-                    if hash in self.hash_dict:
-                        with self.lock:
-                            self.hash_dict[hash].append(path)
-                    else:
-                        with self.lock:
-                            self.hash_dict[hash] = [path]
+                self.hash_dict[image_hash].append(path)
             except Exception:
                 continue
 
     def work(self, progress, start_time):
         res = {}
         images = []
-        for root, _, files in os.walk(self.path):
+        for root, _, files in os.walk(self.dir):
             for file in files:
                 images.append(os.path.join(root, file))
 
@@ -78,7 +71,7 @@ class MultyWorker:
 
             que.put(entry)
             progress.emit(
-                100 * (i - self.workers) // len(images),
+                100 * i // len(images),
                 round(time.time() - start_time, 3),
             )
 
