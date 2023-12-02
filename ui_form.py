@@ -8,9 +8,9 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 
 class Ui_PhotoHash(object):
@@ -109,9 +109,7 @@ class Ui_PhotoHash(object):
         )
         self.label_2.setText("")
         self.pushButton_5.setText(
-            QCoreApplication.translate(
-                "PhotoHash", "Open folder in explorer", None
-            )
+            QCoreApplication.translate("PhotoHash", "Open folder in explorer", None)
         )
         self.comboBox.setItemText(
             0,
@@ -121,9 +119,7 @@ class Ui_PhotoHash(object):
         )
         self.comboBox.setItemText(
             1,
-            QCoreApplication.translate(
-                "PhotoHash", "Difference hashing", None
-            ),
+            QCoreApplication.translate("PhotoHash", "Difference hashing", None),
         )
         self.comboBox.setItemText(
             2, QCoreApplication.translate("PhotoHash", "Average hashing", None)
@@ -144,9 +140,7 @@ class Ui_PhotoHash(object):
             ),
         )
 
-        self.label.setText(
-            QCoreApplication.translate("PhotoHash", "using:", None)
-        )
+        self.label.setText(QCoreApplication.translate("PhotoHash", "using:", None))
         self.pushButton_6.setText(
             QCoreApplication.translate("PhotoHash", "Delete copies", None)
         )

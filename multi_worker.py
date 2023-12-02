@@ -3,9 +3,11 @@ import threading
 import time
 from collections import defaultdict
 from queue import Queue
+
 import imagehash
-import worker
 from PIL import Image, ImageFile
+
+import worker
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 Image.MAX_IMAGE_PIXELS = 265949760

@@ -1,7 +1,9 @@
 import os
 import time
+
 from PIL import Image, ImageFile
 from send2trash import send2trash
+
 from multi_worker import MultyWorker
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True

@@ -1,5 +1,7 @@
-from PySide2.QtCore import QRunnable, Signal, QObject, Slot
-import traceback, sys
+import sys
+import traceback
+
+from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
 a = False
 

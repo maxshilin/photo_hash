@@ -1,13 +1,14 @@
-import sys
-import worker
-import hashing
 import multiprocessing
+import sys
+
+from PySide6 import QtCore, QtWidgets
+from PySide6.QtCore import QThreadPool, QUrl
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import QMessageBox, QWidget
+
+import hashing
+import worker
 from ui_form import Ui_PhotoHash
-from PySide2 import QtCore, QtWidgets
-from PySide2.QtWidgets import QApplication, QWidget, QMessageBox
-from PySide2.QtCore import QFile, QThreadPool, QUrl
-from PySide2.QtGui import QDesktopServices
-from PySide2 import QtXml
 
 
 class window(QWidget, Ui_PhotoHash):
@@ -64,9 +65,7 @@ class window(QWidget, Ui_PhotoHash):
         )
 
         if out[3] == self.path:
-            self.label_1.setText(
-                self.path + "      Photos found: " + str(out[2])
-            )
+            self.label_1.setText(self.path + "      Photos found: " + str(out[2]))
             self.label_1.adjustSize()
         self.pushButton_2.setEnabled(True)
         self.pushButton_3.setEnabled(True)
