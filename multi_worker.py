@@ -1,9 +1,9 @@
-import os
 import concurrent.futures
+import os
 import time
 from collections import defaultdict
-from typing import Optional, Dict, Callable
 from dataclasses import dataclass
+from typing import Callable, Dict, Optional
 
 import imagehash
 from PIL import Image, ImageFile
