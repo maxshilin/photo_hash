@@ -4,7 +4,7 @@ import time
 from PIL import Image, ImageFile
 from send2trash import send2trash
 
-from multi_worker import MultyWorker
+from multi_worker import MultiThreadWorker
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 Image.MAX_IMAGE_PIXELS = 265949760
@@ -43,17 +43,17 @@ def uncopy(source_dir, signals):
         with open(
             os.path.join(source_dir, "DONT DELETE.txt"), "r", encoding="utf-8"
         ) as file:
-            for string in file:
-                string = string.split(" -- ")
-                initial_names[string[0]] = " -- ".join(string[1:]).strip()
+            for line in file:
+                name, path = line.strip().split(" -- ")
+                initial_names[name] = path
     else:
         return exit_function()
 
-    for name in os.listdir(new_dir):
+    for file in os.listdir(new_dir):
         try:
             os.rename(
-                os.path.join(new_dir, name),
-                initial_names[name],
+                os.path.join(new_dir, file),
+                initial_names[file],
             )
         except OSError:
             continue
@@ -71,7 +71,10 @@ def delete(arg, signals):
         head = os.path.dirname(value[0])
         os.chdir(head)
         for i in range(len(value) - 1):
-            send2trash(os.path.basename(value[i]))
+            try:
+                send2trash(os.path.basename(value[i]))
+            except Exception as e:
+                print(e)
     os.chdir(old_pwd)
     return dir_open(source_dir)
 
@@ -79,8 +82,8 @@ def delete(arg, signals):
 def get_hash_dict(source_dir, progress, start_time, method, threads):
     thread_dic = {0: 3 * os.cpu_count() // 4, 1: 1, 2: 2, 3: 4, 4: 8}
 
-    worker = MultyWorker(method, thread_dic[threads], source_dir)
-    res = worker.work(progress, start_time)
+    worker = MultiThreadWorker(method, thread_dic[threads], source_dir)
+    res = worker.get_hash_multithreaded(progress, start_time)
 
     return res
 

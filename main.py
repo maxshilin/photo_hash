@@ -11,9 +11,9 @@ import worker
 from ui_form import Ui_PhotoHash
 
 
-class window(QWidget, Ui_PhotoHash):
+class Window(QWidget, Ui_PhotoHash):
     def __init__(self):
-        super(window, self).__init__()
+        super(Window, self).__init__()
         self.setupUi(self)
         self.pushButton_1.clicked.connect(self.button_1_clicked)
         self.pushButton_2.clicked.connect(self.button_2_clicked)
@@ -166,6 +166,6 @@ if __name__ == "__main__":
     multiprocessing.freeze_support()
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication(sys.argv)
-    widget = window()
+    widget = Window()
     widget.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
