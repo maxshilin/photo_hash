@@ -3,11 +3,25 @@ import time
 
 from PIL import Image, ImageFile
 from send2trash import send2trash
+from PySide6.QtCore import QObject, Signal
 
 from multi_worker import MultiThreadWorker
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 Image.MAX_IMAGE_PIXELS = 265949760
+
+
+class WorkerSignals(QObject):
+    finished = Signal()
+    error = Signal(tuple)
+    result = Signal(object)
+    progress = Signal(object, object)
+
+    def emit_progress(self, num: int, total: int, started: float) -> None:
+        self.progress.emit(
+            100 * num // total,
+            round(time.time() - started, 3),
+        )
 
 
 def dir_open(source_dir, signals=None):
@@ -55,7 +69,7 @@ def uncopy(source_dir, signals):
                 os.path.join(new_dir, file),
                 initial_names[file],
             )
-        except OSError:
+        except (OSError, KeyError):
             continue
 
     return exit_function()
@@ -79,27 +93,26 @@ def delete(arg, signals):
     return dir_open(source_dir)
 
 
-def get_hash_dict(source_dir, progress, start_time, method, threads):
+def get_hash_dict(source_dir, signals, start_time, method, threads):
     thread_dic = {0: 3 * os.cpu_count() // 4, 1: 1, 2: 2, 3: 4, 4: 8}
 
     worker = MultiThreadWorker(method, thread_dic[threads], source_dir)
-    res = worker.get_hash_multithreaded(progress, start_time)
+    res = worker.get_hash_multithreaded(signals, start_time)
 
     return res
 
 
-def find_simular_images(arg, signals):
+def find_simular_images(arg, signals: WorkerSignals):
     source_dir = arg[0]
-    progress = signals.progress
     start_time = time.time()
-    hash_dict = get_hash_dict(source_dir, progress, start_time, arg[1], arg[2])
+    hash_dict = get_hash_dict(source_dir, signals, start_time, arg[1], arg[2])
 
     if hash_dict:
         new_dir = os.path.join(source_dir, "copies")
         if not os.path.isdir(new_dir):
             os.mkdir(new_dir)
 
-    progress.emit(100, "Finishing up...")
+    signals.progress.emit(100, "Finishing up...")
     j = 0
     copies_list = []
     for paths in hash_dict.values():

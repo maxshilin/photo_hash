@@ -34,12 +34,13 @@ class MultiThreadWorker:
         except Exception:
             return None
 
-    def get_hash_multithreaded(self, progress, start_time: int) -> Dict[str, str]:
+    def get_hash_multithreaded(self, signals, start_time: int) -> Dict[str, str]:
         res = {}
         images = []
         for root, _, files in os.walk(self.dir):
             for file in files:
                 images.append(os.path.join(root, file))
+        total = len(images)
 
         func_dic = {
             0: imagehash.phash,
@@ -62,10 +63,7 @@ class MultiThreadWorker:
                 if hash_model:
                     self.hash_dict[hash_model.image_hash].append(hash_model.path)
 
-                progress.emit(
-                    100 * i // len(images),
-                    round(time.time() - start_time, 3),
-                )
+                signals.emit_progress(i, total, start_time)
 
         for key, value in self.hash_dict.items():
             if len(value) > 1:

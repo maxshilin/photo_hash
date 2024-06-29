@@ -33,15 +33,7 @@ class Window(QWidget, Ui_PhotoHash):
             ETA = int(t / k * (100 - k))
             PRO = int(t)
             self.label_2.setText(
-                "ETA:  "
-                + str(PRO // 60)
-                + ":"
-                + str(PRO % 60)
-                + " \ "
-                + str(ETA // 60)
-                + ":"
-                + str(ETA % 60)
-                + "  seconds"
+                f"ETA:  {PRO // 60}:{PRO % 60} \\ {ETA // 60}:{ETA % 60}  seconds"
             )
             self.label_2.adjustSize()
         elif k == 100:

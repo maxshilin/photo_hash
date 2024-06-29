@@ -1,16 +1,11 @@
 import sys
 import traceback
 
-from PySide6.QtCore import QObject, QRunnable, Signal, Slot
+from PySide6.QtCore import QRunnable, Slot
+
+from hashing import WorkerSignals
 
 a = False
-
-
-class WorkerSignals(QObject):
-    finished = Signal()
-    error = Signal(tuple)
-    result = Signal(object)
-    progress = Signal(object, object)
 
 
 class Worker(QRunnable):
